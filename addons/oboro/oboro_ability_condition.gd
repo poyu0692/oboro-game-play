@@ -1,36 +1,49 @@
 class_name OboroAbilityCondition
 extends Resource
 
-enum Op { LT, LTE, EQ, GTE, GT }
+enum Operator {
+	EQUAL,
+	NOT_EQUAL,
+	GRETER_THAN,
+	LESS_THAN,
+	GREATRER_THAN_OR_EQUAL,
+	LESS_THAN_OR_EQUAL,
+}
 
-@export var lhs_attr: StringName
-@export var op: Op = Op.GTE
-## rhs_attrが空なら絶対値、指定すれば rhs_attr.value * rhs_value を右辺とする
-@export var rhs_attr: StringName = &""
-@export var rhs_value: float = 0.0
+## Left-hand side attribute name to compare.
+@export var left_attr: StringName
+## Operator for the comparison.
+@export var operator: Operator = Operator.GREATRER_THAN_OR_EQUAL
+## Right-hand side attribute name. If empty, uses right_value as absolute value. Otherwise uses right_attr.value * right_value.
+@export var right_attr: StringName = &""
+## Right-hand side value or multiplier.
+@export var right_value: float = 0.0
 
 
+## Evaluates the condition against the given states.
 func check(states: OboroStates) -> bool:
-	var lhs := states.get_attr(lhs_attr)
+	var lhs := states.get_attr(left_attr)
 	if not lhs:
 		return false
 	var rhs: float
-	if rhs_attr == &"":
-		rhs = rhs_value
+	if right_attr == &"":
+		rhs = right_value
 	else:
-		var rhs_a := states.get_attr(rhs_attr)
+		var rhs_a := states.get_attr(right_attr)
 		if not rhs_a:
 			return false
-		rhs = rhs_a.value * rhs_value
-	match op:
-		Op.LT:
-			return lhs.value < rhs
-		Op.LTE:
-			return lhs.value <= rhs
-		Op.EQ:
+		rhs = rhs_a.value * right_value
+	match operator:
+		Operator.EQUAL:
 			return is_equal_approx(lhs.value, rhs)
-		Op.GTE:
+		Operator.NOT_EQUAL:
+			return lhs.value != rhs
+		Operator.LESS_THAN:
+			return lhs.value < rhs
+		Operator.GREATRER_THAN_OR_EQUAL:
 			return lhs.value >= rhs
-		Op.GT:
+		Operator.GRETER_THAN:
 			return lhs.value > rhs
+		Operator.LESS_THAN_OR_EQUAL:
+			return lhs.value <= rhs
 	return false

@@ -1,17 +1,17 @@
 class_name OboroAttrEvaluator
 extends RefCounted
 
-## トポロジカルソート済みの評価順序
+## Topologically sorted order of attribute evaluation for derived formulas.
 var eval_order: Array[StringName] = []
+## Parsed Expression objects for attributes with derived formulas.
+var _expressions: Dictionary[StringName, Expression] = { }
+## Variable names for each Expression (in attribute name order).
+var _expr_var_names: Dictionary[StringName, PackedStringArray] = { }
+## Dependency graph: attribute name -> array of dependent attribute names.
+var _deps: Dictionary[StringName, Array] = { }
 
-## パース済みExpression（derived式を持つattrのみ）
-var _expressions: Dictionary[StringName, Expression] = {}
-## Expressionに渡す変数名（attr_name順）
-var _expr_var_names: Dictionary[StringName, PackedStringArray] = {}
-## 依存グラフ: attr_name -> 依存するattr_nameの配列
-var _deps: Dictionary[StringName, Array] = {}
 
-
+## Sets up the evaluator with the given attribute definitions and parses derived formulas.
 func setup(defs: Array[OboroAttrDef]) -> void:
 	_deps.clear()
 	_expressions.clear()
@@ -23,29 +23,29 @@ func setup(defs: Array[OboroAttrDef]) -> void:
 		_deps[def.attr_name] = []
 
 	for def in defs:
-		if def.derived.is_empty():
+		if def.derived_formula.is_empty():
 			continue
 		var deps: Array = []
 		var var_names: PackedStringArray = []
 		for name in all_names:
-			if _is_word_in_expr(str(name), def.derived):
+			if _is_word_in_expr(str(name), def.derived_formula):
 				deps.append(name)
 				var_names.append(str(name))
 		_deps[def.attr_name] = deps
 
 		var expr := Expression.new()
-		if expr.parse(def.derived, var_names) == OK:
+		if expr.parse(def.derived_formula, var_names) == OK:
 			_expressions[def.attr_name] = expr
 			_expr_var_names[def.attr_name] = var_names
 
-	var visited: Dictionary = {}
-	var in_stack: Dictionary = {}
+	var visited: Dictionary = { }
+	var in_stack: Dictionary = { }
 	eval_order.clear()
 	for name in all_names:
 		_visit(name, visited, in_stack)
 
 
-## derived式を評価してbase値を返す。derivedがなければdef.base_valueを返す
+## Evaluates the derived formula and returns the base value. Returns def.base_value if no derived formula exists.
 func get_base(def: OboroAttrDef, attrs: Dictionary) -> float:
 	if not _expressions.has(def.attr_name):
 		return def.base_value
@@ -62,7 +62,7 @@ func get_base(def: OboroAttrDef, attrs: Dictionary) -> float:
 
 
 # --- private ---
-## 識別子wordがexpr内で単語として（部分一致でなく）使われているか判定する
+## Checks if a word appears in an expression as a complete word (not a substring).
 func _is_word_in_expr(word: String, expr: String) -> bool:
 	var re := RegEx.new()
 	re.compile("(?<!\\w)" + word + "(?!\\w)")

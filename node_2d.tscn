@@ -9,16 +9,36 @@
 [ext_resource type="Script" uid="uid://djr1lv2xnn0sh" path="res://addons/oboro/oboro_modifier.gd" id="4_4d7sh"]
 [ext_resource type="Script" uid="uid://nqlmo3ql22gs" path="res://addons/oboro/oboro_ability_condition.gd" id="4_ir8iy"]
 [ext_resource type="Script" uid="uid://nq0fwk7fb7y5" path="res://new_script.gd" id="5_hqns4"]
-[ext_resource type="Script" uid="uid://endwcndjl4gl" path="res://addons/oboro/oboro_dmg_calc.gd" id="8_rj586"]
+[ext_resource type="Script" uid="uid://cfh8ue4s2lawu" path="res://addons/oboro/oboro_ability_trigger.gd" id="6_hqns4"]
+[ext_resource type="Script" uid="uid://b87pvatm7j2ue" path="res://addons/oboro/oboro_default_dmg_calc.gd" id="10_ir8iy"]
 
-[sub_resource type="Resource" id="Resource_x0ka3"]
+[sub_resource type="Resource" id="Resource_flf07"]
+script = ExtResource("4_ir8iy")
+metadata/_custom_type_script = "uid://nqlmo3ql22gs"
+
+[sub_resource type="Resource" id="Resource_d2bti"]
+script = ExtResource("6_hqns4")
+attr_conditions = Array[ExtResource("4_ir8iy")]([SubResource("Resource_flf07")])
+metadata/_custom_type_script = "uid://cfh8ue4s2lawu"
+
+[sub_resource type="Resource" id="Resource_ta5nu"]
 script = ExtResource("5_hqns4")
+triggers = Array[ExtResource("6_hqns4")]([SubResource("Resource_d2bti")])
 metadata/_custom_type_script = "uid://nq0fwk7fb7y5"
 
 [sub_resource type="Resource" id="Resource_ir8iy"]
+script = ExtResource("4_4d7sh")
+metadata/_custom_type_script = "uid://djr1lv2xnn0sh"
+
+[sub_resource type="Resource" id="Resource_hqns4"]
 script = ExtResource("2_d21ai")
-grants_abilities = Array[ExtResource("3_rj586")]([SubResource("Resource_x0ka3")])
+modifiers = Array[ExtResource("4_4d7sh")]([SubResource("Resource_ir8iy")])
+grants_abilities = Array[ExtResource("3_rj586")]([SubResource("Resource_ta5nu")])
 metadata/_custom_type_script = "uid://dsx06j6ituenx"
+
+[sub_resource type="Resource" id="Resource_x0ka3"]
+script = ExtResource("2_0hol4")
+metadata/_custom_type_script = "uid://7ywdjj5vfhw5"
 
 [sub_resource type="Resource" id="Resource_0h7mo"]
 script = ExtResource("2_0hol4")
@@ -26,18 +46,19 @@ metadata/_custom_type_script = "uid://7ywdjj5vfhw5"
 
 [sub_resource type="Resource" id="Resource_kdubu"]
 script = ExtResource("3_q6r6c")
-defs = Array[ExtResource("2_0hol4")]([SubResource("Resource_0h7mo")])
+defs = Array[ExtResource("2_0hol4")]([SubResource("Resource_x0ka3"), SubResource("Resource_0h7mo")])
 
-[sub_resource type="Resource" id="Resource_4d7sh"]
-script = ExtResource("8_rj586")
-metadata/_custom_type_script = "uid://endwcndjl4gl"
+[sub_resource type="Resource" id="Resource_nr8wp"]
+script = ExtResource("10_ir8iy")
+target_attr = null
+metadata/_custom_type_script = "uid://b87pvatm7j2ue"
 
 [node name="Node2D" type="Node2D" unique_id=574180990]
 script = ExtResource("1_0hol4")
-s = Array[ExtResource("2_d21ai")]([SubResource("Resource_ir8iy")])
+s = Array[ExtResource("2_d21ai")]([SubResource("Resource_hqns4")])
 
 [node name="OboroComponent" type="Node" parent="." unique_id=294218473]
 script = ExtResource("1_epypp")
 attr_set = SubResource("Resource_kdubu")
-dmg_calc = SubResource("Resource_4d7sh")
+dmg_calc = SubResource("Resource_nr8wp")
 metadata/_custom_type_script = "uid://ca8o7ogltqajb"

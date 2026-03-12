@@ -5,5 +5,5 @@ extends OboroAbility
 func _activate(ctx: OboroAbilityCtx) -> void:
 	var dmg_ctx := await ctx.wait_pre_damage_received()
 	var effect := OboroEffect.new()
-	var mod := OboroModifier.create(&"hp", OboroModifier.Op.ADD, 20.0)
+	var mod := OboroModifier.create(&"hp", OboroModifier.Operator.ADD, 20.0)
 	effect.modifiers.append(mod)

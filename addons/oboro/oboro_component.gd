@@ -1,11 +1,13 @@
+@icon("res://addons/oboro/volleyball.svg")
 class_name OboroComponent
 extends Node
 
+## Resource defining the initial attributes for this component.
 @export var attr_set: OboroAttrSet
+## Damage calculator for processing damage context.
 @export var dmg_calc: OboroDmgCalc
 
-## ノードがアクティブになったときに自動で適用されるEffect群
-var activate_effects: Array[OboroEffect] = []
+## The current state of this component (attributes, effects, abilities, tags).
 var state: OboroStates
 var _processer: OboroEffectProcesser
 
@@ -13,33 +15,33 @@ var _processer: OboroEffectProcesser
 func _ready() -> void:
 	state = OboroStates.new()
 	_processer = OboroEffectProcesser.new()
+	_processer.setup(self)
 	if attr_set:
 		state.init_attrs(attr_set.defs)
-	state.effect_applied.connect(_on_effect_applied)
-	state.effect_removed.connect(_on_effect_removed)
-	for effect in activate_effects:
-		_processer.apply(state, effect)
 
 
 func _process(delta: float) -> void:
 	state.tick(delta)
 
 
+## Gets an attribute by name. Returns null if not found.
 func get_attr(attr_name: StringName) -> OboroAttr:
 	return state.get_attr(attr_name)
 
 
-func apply_effect(effect: OboroEffect) -> bool:
-	return _processer.apply(state, effect)
+## Applies an effect to this component's state. Returns true if successfully applied.
+func apply_effect(effect: OboroEffect, source: OboroStates = null) -> bool:
+	return _processer.apply(state, effect, source)
 
 
-## ダメージを与える側が呼ぶ。pre_damage_sentフック後にtarget.receive_damageを呼ぶ
+## Sends damage to a target. Called by the damage source. Emits pre_damage_sent before calling target.receive_damage.
 func send_damage(ctx: OboroDmgCtx, target_oboro: OboroComponent) -> void:
 	ctx.source_oboro = self
 	state.pre_damage_sent.emit(ctx)
 	target_oboro.receive_damage(ctx)
 
 
+## Receives damage from a source. Emits pre_damage_received and applies damage effect if dmg_calc is set.
 func receive_damage(ctx: OboroDmgCtx) -> void:
 	ctx.target_oboro = self
 	state.pre_damage_received.emit(ctx)
@@ -49,18 +51,27 @@ func receive_damage(ctx: OboroDmgCtx) -> void:
 	state.receive_damage(ctx)
 
 
-func activate(ability_name: StringName) -> bool:
-	var ctx := _create_ability_ctx()
+## Checks if an ability can be activated by name.
+func can_activate(ability_name: StringName) -> bool:
+	var ctx := create_ability_ctx()
 	for ability: OboroAbility in state.abilities:
 		if ability.ability_name == ability_name:
-			if ability._can_activate(ctx):
+			return ability.can_activate(ctx)
+	return false
+
+
+## Activates an ability by name. Returns true if the ability was successfully activated.
+func activate(ability_name: StringName) -> bool:
+	var ctx := create_ability_ctx()
+	for ability: OboroAbility in state.abilities:
+		if ability.ability_name == ability_name:
+			if ability.can_activate(ctx):
 				ability.invoke(ctx)
 				return true
 	return false
 
 
-# --- private ---
-func _create_ability_ctx() -> OboroAbilityCtx:
+func create_ability_ctx() -> OboroAbilityCtx:
 	var ctx := OboroAbilityCtx.new()
 	ctx.owner = owner
 	ctx.oboro = self
@@ -68,30 +79,3 @@ func _create_ability_ctx() -> OboroAbilityCtx:
 	ctx.state = state
 	ctx.effects = _processer
 	return ctx
-
-
-func _on_effect_applied(effect: OboroEffect) -> void:
-	for ability: OboroAbility in effect.grants_abilities:
-		state.grant_ability(ability)
-	for ability_name: StringName in effect.revokes_abilities:
-		state.revoke_ability(ability_name)
-	if not effect.revokes_abilities_by_tag.is_empty():
-		var to_revoke: Array[OboroAbility] = []
-		for a: OboroAbility in state.abilities:
-			var matched := false
-			for t in a.active_tags:
-				for q in effect.revokes_abilities_by_tag:
-					if t == q or t.begins_with(q + "."):
-						matched = true
-						break
-				if matched:
-					break
-			if matched:
-				to_revoke.append(a)
-		for a in to_revoke:
-			state.revoke_ability(a.ability_name)
-
-
-func _on_effect_removed(effect: OboroEffect) -> void:
-	for ability: OboroAbility in effect.grants_abilities:
-		state.revoke_ability(ability.ability_name)
