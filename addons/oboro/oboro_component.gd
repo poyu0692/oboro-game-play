@@ -7,6 +7,23 @@ extends Node
 ## Damage calculator for processing damage context.
 @export var dmg_calc: OboroDmgCalc
 
+## Relayed from OboroStates.tag_added
+signal tag_added(tag: String)
+## Relayed from OboroStates.tag_removed
+signal tag_removed(tag: String)
+## Relayed from OboroStates.effect_applied
+signal effect_applied(effect: OboroEffect)
+## Relayed from OboroStates.effect_removed
+signal effect_removed(effect: OboroEffect)
+## Relayed from OboroStates.pre_damage_sent
+signal pre_damage_sent(ctx: OboroDmgCtx)
+## Relayed from OboroStates.pre_damage_received
+signal pre_damage_received(ctx: OboroDmgCtx)
+## Relayed from OboroStates.damage_received
+signal damage_received(ctx: OboroDmgCtx)
+## Emitted when an ability emits a game event (VFX, SFX, UI, etc).
+signal event_emitted(event_name: StringName, payload: Variant)
+
 ## The current state of this component (attributes, effects, abilities, tags).
 var state: OboroStates
 var _processer: OboroEffectProcesser
@@ -15,9 +32,16 @@ var _processer: OboroEffectProcesser
 func _ready() -> void:
 	state = OboroStates.new()
 	_processer = OboroEffectProcesser.new()
-	_processer.setup(self)
+	_processer.setup(self )
 	if attr_set:
 		state.init_attrs(attr_set.defs)
+	state.tag_added.connect(tag_added.emit)
+	state.tag_removed.connect(tag_removed.emit)
+	state.effect_applied.connect(effect_applied.emit)
+	state.effect_removed.connect(effect_removed.emit)
+	state.pre_damage_sent.connect(pre_damage_sent.emit)
+	state.pre_damage_received.connect(pre_damage_received.emit)
+	state.damage_received.connect(damage_received.emit)
 
 
 func _process(delta: float) -> void:

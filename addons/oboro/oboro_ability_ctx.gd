@@ -42,3 +42,10 @@ func wait_tag(tag: String) -> String:
 		if t == tag:
 			return t
 	return ""
+
+
+## Emits a named event on the OboroComponent (e.g. for VFX, SFX, UI).
+## External systems can connect to `oboro.event_emitted` and filter by event_name.
+## Example: ctx.emit_event(&"hit.critical", {"position": pos})
+func emit_event(event_name: StringName, payload: Variant = null) -> void:
+	oboro.event_emitted.emit(event_name, payload)
